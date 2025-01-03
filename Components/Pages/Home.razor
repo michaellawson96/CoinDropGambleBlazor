@@ -6,12 +6,12 @@
 
 <PageTitle>Coin Drop Gamble</PageTitle>
 
-<div class="d-flex flex-column justify-content-center align-items-center vh-100 background">
-    @if (!_isGameStarted)
-    {
+@if (!_isGameStarted)
+{
+    <div class="d-flex flex-column justify-content-center align-items-center vh-100 background">
         <div class="card text-center text-white bg-dark shadow-lg">
             <div class="card-body">
-                <h1 class="card-title">Welcome to Coin Drop Gamble</h1>
+                <h3 class="card-title">Welcome to Coin Drop Gamble</h3>
                 <p class="card-text">
                     Enter a high-stakes game where every coin counts. 
                     Manage your chances, outsmart your opponent, and 
@@ -20,43 +20,71 @@
                 <button class="btn btn-warning btn-lg" @onclick="StartGame">Start Game</button>
             </div>
         </div>
-    }
-    else
-    {
-        <div class="card text-center text-white bg-dark shadow-lg">
-            <div class="card-body">
-                <h1 class="card-title">Capacity Section</h1>
-                <p class="card-text">
-                    where the estimated Capacity of the Piggy Bank Will be
-                </p>
+    </div>
+}
+else
+{
+    <div class="container py-4">
+    <div class="row g-4">
+        <!-- Capacity Section on top of image section -->
+        <div class="col-lg-4 d-flex flex-column">
+            <div class="card text-center text-white bg-dark shadow-lg section-card flex-fill">
+                <div class="card-body capacity-section">
+                    <h3 class="card-title">18 - 22</h3>
+                </div>
+            </div>
+            <div class="card text-center text-white bg-dark shadow-lg section-card flex-fill image-section">
+                <img src="images/piggy-bank-towards-viewer.jpeg" class="card bg-dark"/>
             </div>
         </div>
-        <div class="card text-center text-white bg-dark shadow-lg">
-            <div class="card-body">
-                <h1 class="card-title">Piggy Bank Section</h1>
-                <p class="card-text">
-                    where the Piggy Bank Will be
-                </p>
+
+        <!-- Description Section -->
+        <div class="col-lg-8 d-flex flex-column">
+            <div class="card text-center text-white bg-dark shadow-lg section-card flex-fill">
+                <div class="card-body description-section">
+                    <h3 class="card-title">Description Section</h3>
+                    <p class="card-text">Game outcomes and tutorials.</p>
+                </div>
             </div>
         </div>
-        <div class="card text-center text-white bg-dark shadow-lg">
-            <div class="card-body">
-                <h1 class="card-title">Action section</h1>
-                <p class="card-text">
-                    Here Will be a list of buttons with actions that your chances take, including Regular Coin, a list of your special coins, and the shake Pig option.
-                </p>
-            </div>
-        </div>
-        <div class="card text-center text-white bg-dark shadow-lg">
-            <div class="card-body">
-                <h1 class="card-title">Status section</h1>
-                <p class="card-text">
-                    Here will be the following values: your health, your opponent's health, coins you've inserted this turn, coins you can insert this turn, and the amount of coins you have for the shop.
-                </p>
-            </div>
-        </div>
-    }
+    </div>
 </div>
+
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- Action Section -->
+        <div class="col-6 d-flex flex-column">
+            <div class="card text-center text-white bg-dark shadow-lg section-card flex-fill">
+                <div class="card-body action-section">
+                    <div class="row">
+                        <button class="btn btn-warning btn-lg col-12 my-1" @onclick="DropCoin">Coin 3/3</button>
+                        <button class="btn btn-warning btn-lg col-12 my-1 " @onclick="Shake">Shake</button>
+                        <button class="btn btn-warning btn-lg col-12  my-1 " @onclick="Extra">Special</button>
+                        <button class="btn btn-warning btn-lg col-12  my-1 " @onclick="Extra">End Turn</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Section -->
+        <div class="col-6 d-flex flex-column">
+            <div class="card text-center text-white bg-dark shadow-lg section-card flex-fill">
+                <div class="card-body status-section">
+                    
+                    <p class="card-text">YOUR TURN</p>
+                    <p class="card-text">Your HP: 3</p>
+                    <p class="card-text">Your $: 33</p>
+                    <p class="card-text">Their HP: 3</p>
+                    <p class="card-text">Their $: 33</p>
+                    <p class="card-text">Games Won: 0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+}
 
 @code {
     private const int MAX_COINS_PLAYABLE = 3;
@@ -81,11 +109,10 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private void NewRound(){
-    }
+    private void NewRound() { }
+    private void NewTurn() { }
 
-    private void NewTurn(){
-
-    }
-
+    private void DropCoin() { }
+    private void Shake() { }
+    private void Extra() { }
 }
