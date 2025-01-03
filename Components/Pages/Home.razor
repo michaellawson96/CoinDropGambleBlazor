@@ -1,24 +1,91 @@
 ﻿@page "/"
+@using System.ComponentModel
+@using CoinDropGamble.Models.Enums
+@using CoinDropGamble.Helpers
+@rendermode InteractiveServer
 
 <PageTitle>Coin Drop Gamble</PageTitle>
 
-<div class="d-flex justify-content-center align-items-center vh-100 background">
-    <div class="card text-center text-white bg-dark shadow-lg">
-        <div class="card-body">
-            <h1 class="card-title">Welcome to Coin Drop Gamble</h1>
-            <p class="card-text">
-                Enter a high-stakes game where every coin counts. 
-                Manage your chances, outsmart your opponent, and 
-                survive the gamble.
-            </p>
-            <button class="btn btn-warning btn-lg" @onclick="StartGame">Start Game</button>
+<div class="d-flex flex-column justify-content-center align-items-center vh-100 background">
+    @if (!_isGameStarted)
+    {
+        <div class="card text-center text-white bg-dark shadow-lg">
+            <div class="card-body">
+                <h1 class="card-title">Welcome to Coin Drop Gamble</h1>
+                <p class="card-text">
+                    Enter a high-stakes game where every coin counts. 
+                    Manage your chances, outsmart your opponent, and 
+                    survive the gamble.
+                </p>
+                <button class="btn btn-warning btn-lg" @onclick="StartGame">Start Game</button>
+            </div>
         </div>
-    </div>
+    }
+    else
+    {
+        <div class="card text-center text-white bg-dark shadow-lg">
+            <div class="card-body">
+                <h1 class="card-title">Capacity Section</h1>
+                <p class="card-text">
+                    where the estimated Capacity of the Piggy Bank Will be
+                </p>
+            </div>
+        </div>
+        <div class="card text-center text-white bg-dark shadow-lg">
+            <div class="card-body">
+                <h1 class="card-title">Piggy Bank Section</h1>
+                <p class="card-text">
+                    where the Piggy Bank Will be
+                </p>
+            </div>
+        </div>
+        <div class="card text-center text-white bg-dark shadow-lg">
+            <div class="card-body">
+                <h1 class="card-title">Action section</h1>
+                <p class="card-text">
+                    Here Will be a list of buttons with actions that your chances take, including Regular Coin, a list of your special coins, and the shake Pig option.
+                </p>
+            </div>
+        </div>
+        <div class="card text-center text-white bg-dark shadow-lg">
+            <div class="card-body">
+                <h1 class="card-title">Status section</h1>
+                <p class="card-text">
+                    Here will be the following values: your health, your opponent's health, coins you've inserted this turn, coins you can insert this turn, and the amount of coins you have for the shop.
+                </p>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
+    private const int MAX_COINS_PLAYABLE = 3;
+    private int _piggyBankCapacity;
+    private int _playerHealthCount;
+    private int _opponentHealthCount;
+    private int _currentRoundMaxHealth;
+    private int _gamesWon;
+    private bool _isGameStarted = false;
+    private bool _isFirstGame = true;
+    private bool _isRegularPiggyBank;
+    private bool _hasPlayerShakenThisGame;
+    private bool _hasOpponentShakenThisGame;
+    private bool _isPlayersTurn;
+    private List<SpecialCoins> _playerSpecialCoins = new();
+    private List<SpecialCoins> _opponentSpecialCoins = new();
+    private List<SpecialCoins> _specialCoinShopItems = new();
+
     private void StartGame()
     {
-        Console.WriteLine("Game Started!");
+        _isGameStarted = true;
+        InvokeAsync(StateHasChanged);
     }
+
+    private void NewRound(){
+    }
+
+    private void NewTurn(){
+
+    }
+
 }
