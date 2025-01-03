@@ -1,7 +1,24 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Coin Drop Gamble</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="d-flex justify-content-center align-items-center vh-100 background">
+    <div class="card text-center text-white bg-dark shadow-lg">
+        <div class="card-body">
+            <h1 class="card-title">Welcome to Coin Drop Gamble</h1>
+            <p class="card-text">
+                Enter a high-stakes game where every coin counts. 
+                Manage your chances, outsmart your opponent, and 
+                survive the gamble.
+            </p>
+            <button class="btn btn-warning btn-lg" @onclick="StartGame">Start Game</button>
+        </div>
+    </div>
+</div>
 
-Welcome to your new app.
+@code {
+    private void StartGame()
+    {
+        Console.WriteLine("Game Started!");
+    }
+}

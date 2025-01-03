@@ -1,5 +1,10 @@
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:'Courier New', Courier, monospace;
+
+    background: url('/images/dark-room-lit-table.jpeg') no-repeat center center fixed;
+    background-color: black; /* Fallback if image doesn't load */
+    background-size: cover;
+    color:white;
 }
 
 a, .btn-link {
@@ -57,4 +62,13 @@ h1:focus {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
+}
+
+/* END OF AUTO GENERATED STYLES*/
+
+/* Custom card adjustments for a semi-transparent background */
+.card.bg-dark {
+    background: rgba(0, 0, 0, 0.8); /* Semi-transparent dark background */
+    border: none;
+    border-radius: 10px;
 }
