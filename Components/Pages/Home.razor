@@ -34,7 +34,7 @@ else
                 </div>
             </div>
             <div class="card text-center text-white bg-dark shadow-lg section-card flex-fill image-section">
-                <img src="images/piggy-bank-towards-viewer.jpeg" class="card bg-dark"/>
+                <img src="@_imagePath" class="card bg-dark"/>
             </div>
         </div>
 
@@ -148,20 +148,14 @@ else
 
 @code {
     private const int MAX_COINS_PLAYABLE = 3;
-    private int _piggyBankCapacity;
-    private int _piggyBankCoinCount = 0;
-    private int _playerHealthCount = 3;
-    private int _opponentHealthCount = 3;
-    private int _currentGameMaxHealth = 3;
-    private int _playerPocketMoneyCount = 0;
-    private int _opponentPocketMoneyCount;
-    private int _playedCoinsCount;
-    private int _playedSpecialCoinsCount;
-    private int _currentDialogIndex;
-    private int _opponentCoinsPlayed;
-    private int _gamesWon = 0;
-    private int _higherDisparity;
-    private int _lowerDisparity;
+    private const string COFFIN_IMAGE_PATH = "images/coffin.jpeg";
+    private const string COIN_BRIEFCASE_IMAGE_PATH = "images/coin-briefcase.jpeg";
+    private const string PIGGY_BANK_IMAGE_PATH = "images/piggy-bank-towards-viewer.jpeg";
+    private const string SPIKED_PIGGY_BANK_IMAGE_PATH = "images/spiked-piggy-bank-towards-viewer.jpeg";
+    private const string BLOODED_SPIKED_PIGGY_BANK_IMAGE_PATH = "images/smash-spiked-piggy-bank-on-head.jpeg";
+    private const string SMASHED_PIGGY_BANK_IMAGE_PATH = "images/smash-piggy-bank-on-head.jpeg";
+
+
     private bool _isGameStarted = false;
     private bool _isFirstGame = true;
     private bool _isRegularPiggyBank = true;
@@ -180,6 +174,21 @@ else
     private bool _isPlayerEndTurnDisabled;
     private bool _isOpponentEndTurnDisabled;
     private bool _isPlayerControlsDisabled;
+    private int _piggyBankCapacity;
+    private int _piggyBankCoinCount = 0;
+    private int _playerHealthCount = 3;
+    private int _opponentHealthCount = 3;
+    private int _currentGameMaxHealth = 3;
+    private int _playerPocketMoneyCount = 0;
+    private int _opponentPocketMoneyCount;
+    private int _playedCoinsCount;
+    private int _playedSpecialCoinsCount;
+    private int _currentDialogIndex;
+    private int _opponentCoinsPlayed;
+    private int _gamesWon = 0;
+    private int _higherDisparity;
+    private int _lowerDisparity;
+    private string _imagePath = PIGGY_BANK_IMAGE_PATH;
     private List<(string line1, string line2)> _dialogList = new();
     private (string line1, string line2) _dialog = (
         "It's your turn. Insert up to 3 coins or shake the swine", 
@@ -311,33 +320,69 @@ else
             else
             {
                 _dialog = (
-            "You insert a coin into the swine", 
-            $"You have inserted {(_playedCoinsCount + _playedSpecialCoinsCount)} coins this turn" 
-            );
+                    "You insert a coin into the swine", 
+                    $"You have inserted {(_playedCoinsCount + _playedSpecialCoinsCount)} coins this turn" 
+                );
             }
         }    
     }
 
     public void CrackPiggyBank()
     {
-        //if it's the player's turn
-            //if the piggy bank is safe, give the player the money
-            //if the piggy bank is not safe, take 1 health point from the player
-                //if the player's health is now 0, start defeat
-                //else, start the shop
+        if(_isPlayersTurn)
+        {
+            if(_isRegularPiggyBank)
+            {
+                _playerPocketMoneyCount += _piggyBankCoinCount;
+                _piggyBankCoinCount = 0;
+            }
+            else
+            {
+                _playerHealthCount--;
+                if(_playerHealthCount <= 0)
+                {
+                    StartDefeat();
+                }
+                else
+                {
+                    StartShop();
+                }
+                
+            }
+            
+                
+        }
 
-        //if it's the player's turn
-            //if the piggy bank is safe, give the player the money
-            //if the piggy bank is not safe, take 1 health point from the player
-                //if the player's health is now 0, start victory
-                //else, start the shop
-        
+        if(_isOpponentsTurn)
+        {
+            if(_isRegularPiggyBank)
+            {
+                _opponentPocketMoneyCount += _piggyBankCoinCount;
+                _piggyBankCoinCount = 0;
+            }
+            else
+            {
+                _opponentHealthCount--;
+                if(_opponentHealthCount <= 0)
+                {
+                    StartVictory();
+                }
+                else
+                {
+                    StartShop();
+                }
+            } 
+        }     
     }
 
     public void StartDefeat()
     {
         //Display game over, the amount of games the player has won, and disable all controls
-
+        _dialog = (
+                    "The spiked piggy bank strikes one last time, its unyielding surface crushing hope along with bone", 
+                    "As you draw your final breath, the coins within remain untouched, forever out of reach. GAME OVER" 
+                );
+        _isPlayerControlsDisabled = true;
     }
 
     public void StartVictory()
