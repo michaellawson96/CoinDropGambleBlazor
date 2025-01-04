@@ -156,6 +156,7 @@ else
     private int _playerPocketMoneyCount = 0;
     private int _opponentPocketMoneyCount;
     private int _playedCoinsCount;
+    private int _playedSpecialCoinsCount;
     private int _currentDialogIndex;
     private int _opponentCoinsPlayed;
     private int _gamesWon = 0;
@@ -291,16 +292,93 @@ else
         }
     }
 
-    private void DropCoinAction() { }
+    private void DropCoinAction() 
+    { 
+        //Put the reverse of the disabled condition here too as crafty players might try to reenable the button using dev tools
+        if(!(_isPlayerCoinDisabled || _isPlayerControlsDisabled || (_playedCoinsCount == MAX_COINS_PLAYABLE)))
+        {
+        //put the coin in
+            if(_isPlayersTurn)
+            {
+                _playedCoinsCount++;
+                _piggyBankCoinCount++;
+            }
+            //if it has hit the limit. crack the piggy bank
+            if(_piggyBankCoinCount == _piggyBankCapacity)
+            {
+                CrackPiggyBank();
+            }
+            else
+            {
+                _dialog = (
+            "You insert a coin into the swine", 
+            $"You have inserted {(_playedCoinsCount + _playedSpecialCoinsCount)} coins this turn" 
+            );
+            }
+        }    
+    }
+
+    public void CrackPiggyBank()
+    {
+        //if it's the player's turn
+            //if the piggy bank is safe, give the player the money
+            //if the piggy bank is not safe, take 1 health point from the player
+                //if the player's health is now 0, start defeat
+                //else, start the shop
+
+        //if it's the player's turn
+            //if the piggy bank is safe, give the player the money
+            //if the piggy bank is not safe, take 1 health point from the player
+                //if the player's health is now 0, start victory
+                //else, start the shop
+        
+    }
+
+    public void StartDefeat()
+    {
+        //Display game over, the amount of games the player has won, and disable all controls
+
+    }
+
+    public void StartVictory()
+    {
+
+    }
+
+    public void StartShop()
+    {
+
+    }
+
     private void ShakeAction() 
     {
-        _hasPlayerShakenThisRound = true;
-        _hasPlayerActedThisTurn = true;
-        _dialog = (
-        "You Shake the swine", 
-        $"Hmm... Sounds like it has {_piggyBankCoinCount} coins in it" 
-        );
+        //Put the reverse of the disabled condition here too as crafty players might try to reenable the button using dev tools
+        if(!(_isPlayerShakeDisabled || _hasPlayerShakenThisRound || _isPlayerControlsDisabled)){
+            
+            _hasPlayerShakenThisRound = true;
+            _hasPlayerActedThisTurn = true;
+            _dialog = (
+            "You Shake the swine", 
+            $"Hmm... Sounds like it has {_piggyBankCoinCount} coins in it" 
+            );
+        }
     }
-    private void SpecialAction() { }
-    private void EndTurnAction() { }
+    private void SpecialAction() 
+    { 
+        //Put the reverse of the disabled condition here too as crafty players might try to reenable the button using dev tools
+        if(!(_isPlayerSpecialDisabled || !_playerSpecialCoins.Any() || _isPlayerControlsDisabled))
+        {
+            
+        }
+        
+    }
+    private void EndTurnAction() 
+    { 
+        //Put the reverse of the disabled condition here too as crafty players might try to reenable the button using dev tools
+        if(!(_isPlayerEndTurnDisabled || !_hasPlayerActedThisTurn || _isPlayerControlsDisabled ))
+        {
+            
+        }
+        
+    }
 }
