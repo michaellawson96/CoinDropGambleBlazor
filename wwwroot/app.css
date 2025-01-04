@@ -47,3 +47,26 @@ h1:focus {
     border: none;
     border-radius: 10px;
 }
+
+.flashing-button {
+    animation: flash 1s infinite; /* Apply the animation */
+  }
+  
+  /* Define the keyframes for the flash animation */
+  @keyframes flash {
+    0% {
+      background-color: #0d6efd; /* Bootstrap primary blue */
+      color: white;
+      box-shadow: 0 0 5px #0d6efd;
+    }
+    50% {
+      background-color: #0056b3; /* Darker shade for the flash */
+      color: white;
+      box-shadow: 0 0 15px #0056b3;
+    }
+    100% {
+      background-color: #0d6efd;
+      color: white;
+      box-shadow: 0 0 5px #0d6efd;
+    }
+  }

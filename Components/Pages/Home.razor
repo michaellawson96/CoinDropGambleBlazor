@@ -11,13 +11,13 @@
     <div class="d-flex flex-column justify-content-center align-items-center vh-100 background">
         <div class="card text-center text-white bg-dark shadow-lg">
             <div class="card-body">
-                <h3 class="card-title">Welcome to Coin Drop Gamble</h3>
+                <h1 class="card-title">Coin Drop Gamble</h1>
                 <p class="card-text">
                     Enter a high-stakes game where every coin counts. 
                     Manage your chances, outsmart your opponent, and 
                     survive the gamble.
                 </p>
-                <button class="btn btn-warning btn-lg" @onclick="StartGame">Start Game</button>
+                <button class="btn btn-warning btn-lg" @onclick="StartGameButtonPressed">Start Game</button>
             </div>
         </div>
     </div>
@@ -30,7 +30,7 @@ else
         <div class="col-lg-4 d-flex flex-column">
             <div class="card text-center text-white bg-dark shadow-lg section-card flex-fill">
                 <div class="card-body capacity-section">
-                    <h3 class="card-title">18 - 22</h3>
+                    <h3 class="card-title">BETWEEN @(_piggyBankCapacity-_lowerDisparity) AND @(_piggyBankCapacity + _higherDisparity)</h3>
                 </div>
             </div>
             <div class="card text-center text-white bg-dark shadow-lg section-card flex-fill image-section">
@@ -42,8 +42,12 @@ else
         <div class="col-lg-8 d-flex flex-column">
             <div class="card text-center text-white bg-dark shadow-lg section-card flex-fill">
                 <div class="card-body description-section">
-                    <h3 class="card-title">Description Section</h3>
-                    <p class="card-text">Game outcomes and tutorials.</p>
+                    @if(_dialogList.Any()){
+                        <p class="card-text">@_dialogList[0].line1</p>
+                        <p class="card-text"> @_dialogList[0].line2</p>
+                        <button class="btn btn-primary flashing-button" @onclick="ProgressDialogStream">Continue</button>
+                    }
+                    
                 </div>
             </div>
         </div>
@@ -57,10 +61,10 @@ else
             <div class="card text-center text-white bg-dark shadow-lg section-card flex-fill">
                 <div class="card-body action-section">
                     <div class="row">
-                        <button class="btn btn-warning btn-lg col-12 my-1" @onclick="DropCoin">Coin 3/3</button>
-                        <button class="btn btn-warning btn-lg col-12 my-1 " @onclick="Shake">Shake</button>
-                        <button class="btn btn-warning btn-lg col-12  my-1 " @onclick="Extra">Special</button>
-                        <button class="btn btn-warning btn-lg col-12  my-1 " @onclick="Extra">End Turn</button>
+                        <button class="btn btn-primary btn-lg col-12 my-1" disabled="@(_isPlayerCoinDisabled || _isPlayerControlsDisabled || (_playedCoinsCount == 3))" @onclick="DropCoinAction">Coin @(3-_playedCoinsCount)/@(MAX_COINS_PLAYABLE)</button>
+                        <button class="btn btn-success btn-lg col-12 my-1 " disabled="@(_isPlayerShakeDisabled || _hasPlayerShakenThisRound || _isPlayerControlsDisabled)" @onclick="ShakeAction">Shake</button>
+                        <button class="btn btn-warning btn-lg col-12  my-1 " disabled="@(_isPlayerSpecialDisabled || !_playerSpecialCoins.Any() || _isPlayerControlsDisabled)" @onclick="SpecialAction">Special</button>
+                        <button class="btn btn-danger btn-lg col-12  my-1 " disabled="@(_isPlayerEndTurnDisabled || _playedCoinsCount == 0 || _isPlayerControlsDisabled)" @onclick="EndTurnAction">End Turn</button>
                     </div>
                 </div>
             </div>
@@ -71,7 +75,7 @@ else
             <div class="card text-center text-white bg-dark shadow-lg section-card flex-fill">
                 <div class="card-body status-section">
                     
-                    <p class="card-text">YOUR TURN</p>
+                    <p class="card-text">@(_isPlayersTurn ? "YOUR TURN" : "OPPONENT'S TURN")</p>
                     <p class="card-text">Your HP: 3</p>
                     <p class="card-text">Your $: 33</p>
                     <p class="card-text">Their HP: 3</p>
@@ -91,28 +95,123 @@ else
     private int _piggyBankCapacity;
     private int _playerHealthCount;
     private int _opponentHealthCount;
-    private int _currentRoundMaxHealth;
+    private int _currentGameMaxHealth;
+    private int _playerPocketMoneyCount;
+    private int _opponentPocketMoneyCount;
+    private int _playedCoinsCount;
+    private int _currentDialogIndex;
+    private int _opponentCoinsPlayed;
     private int _gamesWon;
+    private int _higherDisparity;
+    private int _lowerDisparity;
     private bool _isGameStarted = false;
     private bool _isFirstGame = true;
-    private bool _isRegularPiggyBank;
-    private bool _hasPlayerShakenThisGame;
-    private bool _hasOpponentShakenThisGame;
-    private bool _isPlayersTurn;
+    private bool _isRegularPiggyBank = true;
+    private bool _hasPlayerShakenThisRound;
+    private bool _hasOpponentShakenThisRound;
+    private bool _isPlayersTurn = true;
+    private bool _isPlayerCoinDisabled;
+    private bool _isOpponentCoinDisabled;
+    private bool _isPlayerShakeDisabled;
+    private bool _isOpponentShakeDisabled;
+    private bool _isPlayerSpecialDisabled;
+    private bool _isOpponentSpecialDisabled;
+    private bool _isPlayerEndTurnDisabled;
+    private bool _isOpponentEndTurnDisabled;
+    private bool _isPlayerControlsDisabled;
+    private List<(string line1, string line2)> _dialogList = new();
     private List<SpecialCoins> _playerSpecialCoins = new();
     private List<SpecialCoins> _opponentSpecialCoins = new();
     private List<SpecialCoins> _specialCoinShopItems = new();
 
-    private void StartGame()
+    private void StartGameButtonPressed()
     {
         _isGameStarted = true;
+        PrepareGame();
+        DisableControls();
+        IntroductionDialog();
         InvokeAsync(StateHasChanged);
     }
+
+    public void PrepareGame()
+    {
+        GenerateCapacityAndRange();
+    }
+
+    public void IntroductionDialog()
+    {
+        _dialogList.Add(("Greetings!","And welcome to the game"));
+        _dialogList.Add(("Survive!","For as long as you can"));
+        _dialogList.Add(("Above the swine, a range","The swine's limit is within that range"));
+        _dialogList.Add(("Break the limit","And its fortune shall be yours"));
+        _dialogList.Add(("You may shake the swine once","To discover its contents"));
+        _dialogList.Add(("Shake, or provide","You must choose one"));
+    }
+
+    public void ProgressDialogStream(){
+        _dialogList.RemoveAt(0);
+        if(!_dialogList.Any())
+        {
+            EnableControls();
+        }
+    }
+
+
+
+    private void GenerateCapacityAndRange()
+{
+    // Random number generator
+    Random random = new Random();
+
+    // Generate a random capacity between 3 and 20
+    _piggyBankCapacity = random.Next(3, 21);
+
+    // Determine the increment range based on games won
+    int incrementMax;
+    if (_gamesWon <= 10)
+        incrementMax = 1;
+    else if (_gamesWon <= 20)
+        incrementMax = random.Next(1, 3); // Random between 1 and 2
+    else if (_gamesWon <= 30)
+        incrementMax = random.Next(1, 4); // Random between 1 and 3
+    else if (_gamesWon <= 40)
+        incrementMax = random.Next(1, 5); // Random between 1 and 4
+    else
+        incrementMax = random.Next(1, 6); // Random between 1 and 5
+
+    // Reset disparities to 0
+    _higherDisparity = 0;
+    _lowerDisparity = 0;
+
+    // Apply increments to disparities
+    for (int i = 0; i < incrementMax; i++)
+    {
+        bool incrementHigherDisparity = true;
+
+        // Boundary checks
+        if (_piggyBankCapacity + _higherDisparity == 20)
+            incrementHigherDisparity = false; // Force increment to lower disparity
+        else if (_piggyBankCapacity - _lowerDisparity == 3)
+            incrementHigherDisparity = true; // Force increment to higher disparity
+        else
+            incrementHigherDisparity = random.Next(0, 2) == 0; // 50/50 chance otherwise
+
+        if (incrementHigherDisparity)
+            _higherDisparity++;
+        else
+            _lowerDisparity++;
+    }
+}
+
+
+    private void DisableControls() => _isPlayerControlsDisabled = true;
+    private void EnableControls() => _isPlayerControlsDisabled = false;
 
     private void NewRound() { }
     private void NewTurn() { }
 
-    private void DropCoin() { }
-    private void Shake() { }
-    private void Extra() { }
+    private void DropCoinAction() { }
+    private void ShakeAction() { }
+    private void SpecialAction() { }
+    private void EndTurnAction() { }
 }
