@@ -8,6 +8,13 @@ html, body {
     color:white;
 }
 
+.image-section img {
+  width: 50%; /* Reduces the width to 50% of its original size */
+  height: auto; /* Maintains the aspect ratio */
+  display: block; /* Ensures the image is treated as a block element */
+  margin: auto; /* Centers the image horizontally */
+}
+
 a, .btn-link {
     color: #ffffff;
 }
