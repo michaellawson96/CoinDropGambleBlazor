@@ -68,16 +68,16 @@ else
                     <div class="row">
                         <button 
                             class="btn btn-primary btn-lg col-12 my-1" 
-                            disabled="@(_isPlayerCoinDisabled || _isPlayerControlsDisabled || (_playedCoinsCount == MAX_COINS_PLAYABLE))" 
-                            @onclick="DropCoinAction">
+                            disabled="@(_isPlayerCoinDisabled || _isPlayerControlsDisabled || (_opponentPlayedCoinsCount == MAX_COINS_PLAYABLE))" 
+                            @onclick="PlayerDropCoinAction">
                             @* Render the coins *@
                             @for (int i = 0; i < MAX_COINS_PLAYABLE; i++)
                             {
-                                <i class="bi @(i < _playedCoinsCount ? "bi-dash-circle-dotted text-secondary" : "bi-coin text-warning") me-1"></i>
+                                <i class="bi @(i < _opponentPlayedCoinsCount ? "bi-dash-circle-dotted text-secondary" : "bi-coin text-warning") me-1"></i>
                             }
                         </button>
 
-                        <button class="btn btn-success btn-lg col-12 my-1 " disabled="@(_isPlayerShakeDisabled || _hasPlayerShakenThisRound || _isPlayerControlsDisabled)" @onclick="ShakeAction">Shake</button>
+                        <button class="btn btn-success btn-lg col-12 my-1 " disabled="@(_isPlayerShakeDisabled || _hasPlayerShakenThisRound || _isPlayerControlsDisabled)" @onclick="PlayerShakeAction">Shake</button>
                         <button class="btn btn-warning btn-lg col-12  my-1 " disabled="@(_isPlayerSpecialDisabled || !_playerSpecialCoins.Any() || _isPlayerControlsDisabled)" @onclick="SpecialAction">Special</button>
                         <button class="btn btn-danger btn-lg col-12  my-1 " disabled="@(_isPlayerEndTurnDisabled || !_hasPlayerActedThisTurn || _isPlayerControlsDisabled )" @onclick="EndTurnAction">End Turn</button>
                     </div>
@@ -163,6 +163,7 @@ else
     private bool _hasOpponentShakenThisRound;
     private bool _hasPlayerActedThisTurn;
     private bool _hasOpponentActedThisTurn;
+    private bool _hasOpponentRunOutOfGoodOptions;
     private bool _isPlayersTurn;
     private bool _isOpponentsTurn;
     private bool _isPlayerCoinDisabled;
@@ -181,13 +182,17 @@ else
     private int _currentGameMaxHealth = 3;
     private int _playerPocketMoneyCount = 0;
     private int _opponentPocketMoneyCount;
-    private int _playedCoinsCount;
-    private int _playedSpecialCoinsCount;
+    private int _playerPlayedCoinsCount;
+    private int _opponentPlayedCoinsCount;
+    private int _playerPlayedSpecialCoinsCount;
+    private int _opponentPlayedSpecialCoinsCount;
     private int _currentDialogIndex;
     private int _opponentCoinsPlayed;
     private int _gamesWon = 0;
     private int _higherDisparity;
     private int _lowerDisparity;
+    private int opponentPiggyBankCapacityGuessLow;
+    private int opponentPiggyBankCapacityGuessHigh;
     private string _imagePath = PIGGY_BANK_IMAGE_PATH;
     private List<(string line1, string line2)> _dialogList = new();
     private (string line1, string line2) _dialog = (
@@ -197,7 +202,9 @@ else
     private List<SpecialCoins> _playerSpecialCoins = new();
     private List<SpecialCoins> _opponentSpecialCoins = new();
     private List<SpecialCoins> _specialCoinShopItems = new();
-
+    private int PiggyBankLowerLimit() => _piggyBankCapacity - _lowerDisparity;
+   private int PiggyBankHigherLimit() => _piggyBankCapacity - _higherDisparity;
+    
     private void StartGameButtonPressed()
     {
         _isGameStarted = true;
@@ -225,7 +232,11 @@ else
 
     public void ProgressDialogStream(){
         _dialogList.RemoveAt(0);
-        if(!_dialogList.Any())
+        if(_isOpponentsTurn)
+        {
+            RunOpponentMove();
+        }
+        else if(_isPlayersTurn && !_dialogList.Any())
         {
             EnableControls();
         }
@@ -298,18 +309,104 @@ else
             _isOpponentsTurn = false;
             _isPlayersTurn = true;
             EnableControls();
+            RunOpponentMove();
         }
     }
 
-    private void DropCoinAction() 
+private void RunOpponentMove()
+{
+    /*
+    opponent has a chance to do the following:
+
+        they should shake the piggy bank if they aren't sure about what's in there - DONE
+
+        they should play a coin if they are sure they won't go over the limit
+
+        they should only end their turn if they can't do anything else
+    */
+    if(TryOpponentShakeAction())
+    {
+        OpponentShakeAction();
+    }
+    else if(TryOpponentDropCoinAction())
+    {
+
+    }
+}
+
+public bool TryOpponentShakeAction()
+{
+    if(_hasOpponentShakenThisRound)
+    {
+        return false;
+    }
+    if(_isRegularPiggyBank)
+    {
+        return true;
+    }
+    else
+    {
+        if(opponentPiggyBankCapacityGuessLow != opponentPiggyBankCapacityGuessHigh)
+        {
+            if(_piggyBankCoinCount >= (PiggyBankLowerLimit()-1))
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+    private void OpponentShakeAction()
+    {
+        _hasOpponentActedThisTurn = true;
+        //add equalizer to the opponent's preceived limit once expanding coins are added
+        _dialogList.Add(("The opponent shook the swine","And now knows how many coins it holds"));
+    }
+
+    private bool TryOpponentDropCoinAction()
+    {
+        if(_opponentCoinsPlayed == MAX_COINS_PLAYABLE)
+        {
+            return false;
+        }
+        if(_isRegularPiggyBank)
+        {
+            return true;
+        }
+        if(!_hasOpponentActedThisTurn && _hasOpponentRunOutOfGoodOptions)
+        {
+            return true;
+        }
+        if(_piggyBankCoinCount < PiggyBankLowerLimit())
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private void OpponentDropCoinAction()
+    {
+        _opponentCoinsPlayed++;
+        _piggyBankCoinCount++;
+        _hasOpponentActedThisTurn = true;
+        _dialogList.Add(("The opponent inserts a coin into the swine",$"They have inserted {(_opponentPlayedCoinsCount + _opponentPlayedSpecialCoinsCount)} coins this turn"));
+        if(_piggyBankCoinCount == _piggyBankCapacity)
+            {
+                CrackPiggyBank();
+            }
+    }
+
+    private void PlayerDropCoinAction() 
     { 
         //Put the reverse of the disabled condition here too as crafty players might try to reenable the button using dev tools
-        if(!(_isPlayerCoinDisabled || _isPlayerControlsDisabled || (_playedCoinsCount == MAX_COINS_PLAYABLE)))
+        if(!(_isPlayerCoinDisabled || _isPlayerControlsDisabled || (_opponentPlayedCoinsCount == MAX_COINS_PLAYABLE)))
         {
         //put the coin in
             if(_isPlayersTurn)
             {
-                _playedCoinsCount++;
+                _opponentPlayedCoinsCount++;
                 _piggyBankCoinCount++;
                 _hasPlayerActedThisTurn = true;
             }
@@ -322,7 +419,7 @@ else
             {
                 _dialog = (
                     "You insert a coin into the swine", 
-                    $"You have inserted {(_playedCoinsCount + _playedSpecialCoinsCount)} coins this turn" 
+                    $"You have inserted {(_playerPlayedCoinsCount + _playerPlayedSpecialCoinsCount)} coins this turn" 
                 );
             }
         }    
@@ -334,6 +431,7 @@ else
         {
             if(_isRegularPiggyBank)
             {
+                _dialogList.Add(("You have filled the swine",$"It is smashed on your head and all {(_piggyBankCoinCount)} coins pour out. You collect them"));
                 _playerPocketMoneyCount += _piggyBankCoinCount;
                 _piggyBankCoinCount = 0;
             }
@@ -358,11 +456,13 @@ else
         {
             if(_isRegularPiggyBank)
             {
+                _dialogList.Add(("The opponent has filled the swine",$"It is smashed on their head and all {(_piggyBankCoinCount)} coins pour out. They collect them"));
                 _opponentPocketMoneyCount += _piggyBankCoinCount;
                 _piggyBankCoinCount = 0;
             }
             else
             {
+                _dialogList.Add(("The opponent has filled the swine",$"It is smashed on their head. You hear the sound of metal colliding with bone. The swine doesn't crack"));
                 _opponentHealthCount--;
                 if(_opponentHealthCount <= 0)
                 {
@@ -396,7 +496,7 @@ else
 
     }
 
-    private void ShakeAction() 
+    private void PlayerShakeAction() 
     {
         //Put the reverse of the disabled condition here too as crafty players might try to reenable the button using dev tools
         if(!(_isPlayerShakeDisabled || _hasPlayerShakenThisRound || _isPlayerControlsDisabled)){
@@ -423,7 +523,7 @@ else
         //Put the reverse of the disabled condition here too as crafty players might try to reenable the button using dev tools
         if(!(_isPlayerEndTurnDisabled || !_hasPlayerActedThisTurn || _isPlayerControlsDisabled ))
         {
-            
+            NewTurn();
         }
         
     }
