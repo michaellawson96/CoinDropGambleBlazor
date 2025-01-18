@@ -296,20 +296,20 @@ else
     private void NewRound() { }
     private void NewTurn() 
     {
-        //In this condition, we are moving from the players turn to the opponent's turn
+        //In this condition, we are moving from the players turn to the OPPONENT'S TURN
         if(_isPlayersTurn)
         {
             _isOpponentsTurn = true;
             _isPlayersTurn = false;
             DisableControls();
+            RunOpponentMove();
         }
-        //In this condition, it is either the opponent's turn or nobody's turn so we are moving the player's turn
+        //In this condition, it is either the opponent's turn or nobody's turn so we are moving the PLAYER'S TURN
         else
         {
             _isOpponentsTurn = false;
             _isPlayersTurn = true;
             EnableControls();
-            RunOpponentMove();
         }
     }
 
