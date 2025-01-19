@@ -160,15 +160,14 @@ else
 
 
     private bool _isGameStarted = false;
-    private bool _isFirstGame = true;
     private bool _isRegularPiggyBank = true;
     private bool _hasPlayerShakenThisRound;
     private bool _hasOpponentShakenThisRound;
     private bool _hasPlayerActedThisTurn;
     private bool _hasOpponentActedThisTurn;
     private bool _hasOpponentRunOutOfGoodOptions;
-    private bool _isPlayersTurn;
-    private bool _isOpponentsTurn;
+    private bool _isPlayersTurn =true;
+    private bool _isOpponentsTurn=false;
     private bool _isPlayerCoinDisabled;
     private bool _isOpponentCoinDisabled;
     private bool _isPlayerShakeDisabled;
@@ -191,10 +190,12 @@ else
     private int _opponentPlayedSpecialCoinsCount;
     private int _currentDialogIndex;
     private int _gamesWon = 0;
+    private bool _isNewRoundStarting = false;
     private int _higherDisparity;
     private int _lowerDisparity;
     private int opponentPiggyBankCapacityGuessLow;
     private int opponentPiggyBankCapacityGuessHigh;
+    private int _roundCount = 0;
     private string _imagePath = PIGGY_BANK_IMAGE_PATH;
     private List<(string line1, string line2)> _dialogList = new();
     private (string line1, string line2) _dialog = (
@@ -211,16 +212,25 @@ else
     private void StartGameButtonPressed()
     {
         _isGameStarted = true;
-        PrepareGame();
+        PrepareNewRound();
         DisableControls();
         IntroductionDialog();
         InvokeAsync(StateHasChanged);
     }
 
-    public void PrepareGame()
+    public void PrepareNewRound()
     {
+        
+        _roundCount++;
+        _hasOpponentShakenThisRound = false;
+        _hasPlayerShakenThisRound = false;
+        _isPlayersTurn = true;
+        _isOpponentsTurn = false;
+        _playerPlayedCoinsCount = 0;
+        _opponentPlayedCoinsCount = 0;
+        _piggyBankCoinCount = 0; //should happen before generating new capacity
         GenerateCapacityAndRange();
-        NewTurn();
+        InvokeAsync(StateHasChanged);
     }
 
     public void IntroductionDialog()
@@ -242,6 +252,11 @@ else
         else if(_isPlayersTurn && !_dialogList.Any())
         {
             EnableControls();
+        }
+        else if(!_isOpponentsTurn && !_isPlayersTurn && _isNewRoundStarting)
+        {
+            EnableControls();
+            _isPlayersTurn = true;
         }
     }
 
@@ -296,7 +311,6 @@ else
     private void DisableControls() => _isPlayerControlsDisabled = true;
     private void EnableControls() => _isPlayerControlsDisabled = false;
 
-    private void NewRound() { }
     private void NewTurn() 
     {
         //In this condition, we are moving from the players turn to the OPPONENT'S TURN
@@ -354,7 +368,7 @@ private int CalculateWinChance(out List<OpponentAction> offensiveActions)
     int capDiff = (_piggyBankCapacity+_higherDisparity)-_piggyBankCoinCount;
     //divide 100 by the cap diff +1. this will be the amount that the chance of winning will increase by each time you put in a coin to 
     //bring the current amount of coins in the piggy bank to a value withint the range
-    int chanceIncrement = 100/(capDiff+1);
+    int chanceIncrement = 100 / Math.Max(capDiff + 1, 1);
     int opponentWinChance = 0;
     //opponent has 3 coins to use. so do a for loop with i = 3
     for(int i = 0; i < 3 ; i++)
@@ -451,7 +465,8 @@ private int SimulatePlayerWinChance(int simulatedBankCount, bool playerCanShake)
 
     // Calculate the player's chances of winning based on the simulated state
     int capDiff = (_piggyBankCapacity + _higherDisparity) - simulatedBankCount;
-    int chanceIncrement = 100 / (capDiff + 1);
+    int chanceIncrement = 100 / Math.Max(capDiff + 1, 1);
+
 
     // Player can use up to 3 coins
     for (int i = 0; i < 3; i++)
@@ -555,13 +570,19 @@ private void performNextOpponentAction()
 
     public void CrackPiggyBank()
     {
+
+        DisableControls();
         if(_isPlayersTurn)
         {
+            _isPlayersTurn = false;
+            _isOpponentsTurn = false;
             if(_isRegularPiggyBank)
             {
                 _dialogList.Add(("You have filled the swine",$"It is smashed on your head and all {(_piggyBankCoinCount)} coins pour out. You collect them"));
                 _playerPocketMoneyCount += _piggyBankCoinCount;
                 _piggyBankCoinCount = 0;
+                
+                StartShop();
             }
             else
             {
@@ -582,11 +603,14 @@ private void performNextOpponentAction()
 
         if(_isOpponentsTurn)
         {
+            _isPlayersTurn = false;
+            _isOpponentsTurn = false;
             if(_isRegularPiggyBank)
             {
                 _dialogList.Add(("The opponent has filled the swine",$"It is smashed on their head and all {(_piggyBankCoinCount)} coins pour out. They collect them"));
                 _opponentPocketMoneyCount += _piggyBankCoinCount;
                 _piggyBankCoinCount = 0;
+                StartShop();
             }
             else
             {
@@ -621,7 +645,11 @@ private void performNextOpponentAction()
 
     public void StartShop()
     {
-
+        //add shop logic. for now, a new round starts
+        _dialog = ("A new round has begun", "Select an action");
+        _isNewRoundStarting = true;
+        PrepareNewRound();
+        
     }
 
     private void PlayerShakeAction() 
