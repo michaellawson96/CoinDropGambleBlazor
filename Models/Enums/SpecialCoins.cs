@@ -6,10 +6,10 @@ namespace CoinDropGamble.Models.Enums
 {
     public enum SpecialCoins
     {
-        [Description("Splits into 2 coins inside the piggy bank")]
+        [Description("x2 Coin - Splits into 2 coins inside the piggy bank")]
         TimesTwoCoin,
 
-        [Description("X3 Coin - Splits into 3 coins inside the piggy bank")]
+        [Description("x3 Coin - Splits into 3 coins inside the piggy bank")]
         TimesThreeCoin,
 
         [Description("Ejector Coin - Ejects a random amount of coins from the piggy bank")]
@@ -31,6 +31,9 @@ namespace CoinDropGamble.Models.Enums
         MirrorCoin,
 
         [Description("Shield Coin - Your head will be protected for this turn")]
-        ShieldCoin
+        ShieldCoin,
+
+        [Description("Ghost Coin - Disappears after it is inserted")]
+        GhostCoin
     }
 }
