@@ -190,7 +190,6 @@ else
     private int _playerPlayedSpecialCoinsCount;
     private int _opponentPlayedSpecialCoinsCount;
     private int _currentDialogIndex;
-    private int _opponentCoinsPlayed;
     private int _gamesWon = 0;
     private int _higherDisparity;
     private int _lowerDisparity;
@@ -205,6 +204,7 @@ else
     private List<SpecialCoins> _playerSpecialCoins = new();
     private List<SpecialCoins> _opponentSpecialCoins = new();
     private List<SpecialCoins> _specialCoinShopItems = new();
+    private List<OpponentAction> _opponentsActionsThisTurn = new();
     private int PiggyBankLowerLimit() => _piggyBankCapacity - _lowerDisparity;
    private int PiggyBankHigherLimit() => _piggyBankCapacity - _higherDisparity;
     
@@ -228,7 +228,7 @@ else
         _dialogList.Add(("Greetings!","And welcome to the game"));
         _dialogList.Add(("Survive!","For as long as you can"));
         _dialogList.Add(("Above the swine, a range","The swine's limit is within that range"));
-        _dialogList.Add(("Break the limit","And its fortune shall be yours"));
+        _dialogList.Add(("Fill the swine","And its fortune shall be yours"));
         _dialogList.Add(("You may shake the swine once","To discover its contents"));
         _dialogList.Add(("Shake, or provide","You must choose one"));
     }
@@ -237,7 +237,7 @@ else
         _dialogList.RemoveAt(0);
         if(_isOpponentsTurn)
         {
-            RunOpponentMove();
+            performNextOpponentAction();
         }
         else if(_isPlayersTurn && !_dialogList.Any())
         {
@@ -304,107 +304,227 @@ else
         {
             _isOpponentsTurn = true;
             _isPlayersTurn = false;
+            _opponentPlayedCoinsCount = 0;
+            _hasPlayerActedThisTurn = true;
             DisableControls();
-            RunOpponentMove();
+            RunOpponentTurn();
         }
         //In this condition, it is either the opponent's turn or nobody's turn so we are moving the PLAYER'S TURN
         else
         {
             _isOpponentsTurn = false;
             _isPlayersTurn = true;
+            _playerPlayedCoinsCount = 0;
+            _hasPlayerActedThisTurn = false;
+
             EnableControls();
         }
     }
 
-private void RunOpponentMove()
+private void RunOpponentTurn()
 {
-    /*
-    opponent has a chance to do the following:
+    Console.WriteLine("Opponent turn executing");
+    //Calculate Opponent's win chance this turn
+    int opponentWinChance = CalculateWinChance(out List<OpponentAction> offensiveActions);
 
-        they should shake the piggy bank if they aren't sure about what's in there - DONE
+    //Calculate Opponent's loss chance this turn
+    int opponentLossChance = CalculateLossChance(out List<OpponentAction> defensiveActions);
 
-        they should play a coin if they are sure they won't go over the limit
-
-        they should only end their turn if they can't do anything else
-    */
-
-    /*
-        NOTES:
-        For the first round, the 
-    */
-    if(TryOpponentShakeAction())
+    //If the win chance is higher or equal
+        //perform offensive strategy
+    //else
+        //perform defensive strategy
+    if (opponentWinChance >= opponentLossChance)
     {
-        OpponentShakeAction();
-    }
-    else if(TryOpponentDropCoinAction())
-    {
-
-    }
-}
-
-public bool TryOpponentShakeAction()
-{
-    if(_hasOpponentShakenThisRound)
-    {
-        return false;
-    }
-    if(_isRegularPiggyBank)
-    {
-        return true;
+        _opponentsActionsThisTurn = offensiveActions;
     }
     else
     {
-        if(opponentPiggyBankCapacityGuessLow != opponentPiggyBankCapacityGuessHigh)
+        _opponentsActionsThisTurn = defensiveActions;
+    }
+    performNextOpponentAction();
+}
+
+private int CalculateWinChance(out List<OpponentAction> offensiveActions)
+{
+
+    offensiveActions = new List<OpponentAction>{OpponentAction.InsertCoin,OpponentAction.InsertCoin,OpponentAction.InsertCoin,OpponentAction.EndTurn};
+    int projectedCoinsInBank = _piggyBankCoinCount;
+    //work out the difference in the piggy bank capacity's range
+    int capDiff = (_piggyBankCapacity+_higherDisparity)-_piggyBankCoinCount;
+    //divide 100 by the cap diff +1. this will be the amount that the chance of winning will increase by each time you put in a coin to 
+    //bring the current amount of coins in the piggy bank to a value withint the range
+    int chanceIncrement = 100/(capDiff+1);
+    int opponentWinChance = 0;
+    //opponent has 3 coins to use. so do a for loop with i = 3
+    for(int i = 0; i < 3 ; i++)
+    {
+        //add a coin
+        projectedCoinsInBank++;
+        //if the current coin count is within the range, increment the coin count
+        if(projectedCoinsInBank >= (_piggyBankCapacity-_lowerDisparity) && projectedCoinsInBank <= (_piggyBankCapacity+_higherDisparity))
         {
-            if(_piggyBankCoinCount >= (PiggyBankLowerLimit()-1))
-            {
-                return true;
-            }
+            opponentWinChance += chanceIncrement;
         }
     }
 
-    return false;
+    return opponentWinChance;
 }
+
+private int CalculateLossChance(out List<OpponentAction> defensiveActions)
+{
+    defensiveActions = new();
+    int opponentLossChance = 100; // Start with the maximum possible chance
+    List<OpponentAction> bestDefensiveActions = new();
+
+    // Simulate all valid combinations of defensive actions
+    // 2. Insert 0 to 3 coins, then end the turn
+    for (int coinsToInsert = 0; coinsToInsert <= 3; coinsToInsert++)
+    {
+        List<OpponentAction> insertActions = new List<OpponentAction>();
+        int simulatedBankCount = _piggyBankCoinCount;
+
+        for (int i = 0; i < coinsToInsert; i++)
+        {
+            insertActions.Add(OpponentAction.InsertCoin);
+            simulatedBankCount++;
+        }
+
+        insertActions.Add(OpponentAction.EndTurn);
+
+        int playerWinChance = SimulatePlayerWinChance(simulatedBankCount, !_hasPlayerShakenThisRound);
+        if (playerWinChance < opponentLossChance)
+        {
+            opponentLossChance = playerWinChance;
+            bestDefensiveActions = insertActions;
+        }
+    }
+
+    // 1. Shake and end the turn (if shaking is allowed) This should be done as a last resort
+    if (!_hasOpponentShakenThisRound)
+    {
+        List<OpponentAction> shakeActions = new List<OpponentAction>
+        {
+            OpponentAction.Shake,
+            OpponentAction.EndTurn
+        };
+
+        int playerWinChance = SimulatePlayerWinChance(_piggyBankCoinCount, !_hasPlayerShakenThisRound);
+        if (playerWinChance < opponentLossChance)
+        {
+            opponentLossChance = playerWinChance;
+            bestDefensiveActions = shakeActions;
+        }
+    }
+    
+    //DEBUG: Show current opponent's actions before going random
+    foreach(var action in bestDefensiveActions)
+    {
+        Console.WriteLine(action.ToString());
+    }
+
+
+    // Assign the best defensive actions
+    if (bestDefensiveActions != null)
+        defensiveActions = bestDefensiveActions;
+
+    if (defensiveActions.Count() == 1 && defensiveActions.Contains(OpponentAction.EndTurn))
+        {
+            defensiveActions = new();
+            // Random number generator
+            Random random = new Random();
+
+            for(int i=0; i< random.Next(1, 4); i++)
+            {
+                defensiveActions.Add(OpponentAction.InsertCoin);
+            }
+            defensiveActions.Add(OpponentAction.EndTurn);
+        }
+
+    return opponentLossChance;
+}
+
+
+private int SimulatePlayerWinChance(int simulatedBankCount, bool playerCanShake)
+{
+    int playerWinChance = 0;
+
+    // Calculate the player's chances of winning based on the simulated state
+    int capDiff = (_piggyBankCapacity + _higherDisparity) - simulatedBankCount;
+    int chanceIncrement = 100 / (capDiff + 1);
+
+    // Player can use up to 3 coins
+    for (int i = 0; i < 3; i++)
+    {
+        simulatedBankCount++;
+        if (simulatedBankCount >= (_piggyBankCapacity - _lowerDisparity) && simulatedBankCount <= (_piggyBankCapacity + _higherDisparity))
+        {
+            playerWinChance += chanceIncrement;
+        }
+    }
+
+    // Adjust win chance based on whether the player can shake
+    if (playerCanShake)
+    {
+        playerWinChance = Math.Min(playerWinChance + 10, 100); // Arbitrary bonus for shaking
+    }
+
+    return playerWinChance;
+}
+
+private void performNextOpponentAction()
+{
+    if(_piggyBankCoinCount == _piggyBankCapacity)
+        {
+            CrackPiggyBank();
+        }
+            else
+            {
+                switch(_opponentsActionsThisTurn[0])
+                {
+                    case OpponentAction.InsertCoin:
+                        OpponentDropCoinAction();
+                        break;
+
+                    case OpponentAction.Shake:
+                        OpponentShakeAction();
+                        break;
+
+                    case OpponentAction.EndTurn:
+                        OpponentEndTurnAction();
+                        break;
+                }
+                _opponentsActionsThisTurn.RemoveAt(0);
+            }
+        
+}
+
+
+
 
     private void OpponentShakeAction()
     {
         _hasOpponentActedThisTurn = true;
+        _hasOpponentShakenThisRound = true;
         //add equalizer to the opponent's preceived limit once expanding coins are added
         _dialogList.Add(("The opponent shook the swine","And now knows how many coins it holds"));
     }
 
-    private bool TryOpponentDropCoinAction()
-    {
-        if(_opponentCoinsPlayed == MAX_COINS_PLAYABLE)
-        {
-            return false;
-        }
-        if(_isRegularPiggyBank)
-        {
-            return true;
-        }
-        if(!_hasOpponentActedThisTurn && _hasOpponentRunOutOfGoodOptions)
-        {
-            return true;
-        }
-        if(_piggyBankCoinCount < PiggyBankLowerLimit())
-        {
-            return true;
-        }
-        return false;
-    }
-
     private void OpponentDropCoinAction()
     {
-        _opponentCoinsPlayed++;
+        _opponentPlayedCoinsCount++;
         _piggyBankCoinCount++;
         _hasOpponentActedThisTurn = true;
         _dialogList.Add(("The opponent inserts a coin into the swine",$"They have inserted {(_opponentPlayedCoinsCount + _opponentPlayedSpecialCoinsCount)} coins this turn"));
-        if(_piggyBankCoinCount == _piggyBankCapacity)
-            {
-                CrackPiggyBank();
-            }
     }
+
+    private void OpponentEndTurnAction() 
+    { 
+        NewTurn();
+        _dialog = ("The opponent ends their turn","Please select an action");
+    }
+
+
 
     private void PlayerDropCoinAction() 
     { 

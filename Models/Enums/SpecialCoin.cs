@@ -1,5 +1,3 @@
-// File: Models/Enums/SpecialCoins.cs
-
 using System.ComponentModel;
 
 namespace CoinDropGamble.Models.Enums
