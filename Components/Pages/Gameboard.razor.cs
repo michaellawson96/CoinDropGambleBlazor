@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace CoinDropGamble.Components.Pages
 {
-    public partial class Home : ComponentBase
+    public partial class Gameboard : ComponentBase
     {
     private const int MAX_COINS_PLAYABLE = 3;
     private const string COFFIN_IMAGE_PATH = "images/coffin.jpeg";
@@ -64,7 +64,7 @@ namespace CoinDropGamble.Components.Pages
     private int PiggyBankLowerLimit() => _piggyBankCapacity - _lowerDisparity;
    private int PiggyBankHigherLimit() => _piggyBankCapacity - _higherDisparity;
     
-    private void StartGameButtonPressed()
+    public void StartGameButtonPressed()
     {
         _isGameStarted = true;
         PrepareNewRound();
