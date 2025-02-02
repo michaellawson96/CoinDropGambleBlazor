@@ -60,7 +60,7 @@ else
                             class="btn btn-primary btn-lg col-12 my-1" 
                             disabled="@(_isPlayerCoinDisabled || _isPlayerControlsDisabled || (_playerPlayedCoinsCount == MAX_COINS_PLAYABLE))" 
                             @onclick="PlayerDropCoinAction">
-                            @* Render the coins in a for loop*@
+                            @* Render the coins*@
                             @for (int i = 0; i < MAX_COINS_PLAYABLE; i++)
                             {
                                 <i class="bi @(i < _playerPlayedCoinsCount ? "bi-dash-circle-dotted text-secondary" : "bi-coin text-warning") me-1"></i>
