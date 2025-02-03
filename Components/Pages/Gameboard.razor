@@ -1,4 +1,5 @@
 ﻿@page "/"
+@rendermode InteractiveServer
 @using System.ComponentModel
 @using CoinDropGamble.Models.DTOs
 @using CoinDropGamble.Services
@@ -6,7 +7,6 @@
 @using CoinDropGamble.Models.Enums
 @using CoinDropGamble.Helpers
 @using CoinDropGamble.Components.Pages.Displays;
-@rendermode InteractiveServer
 @inject IGameService GameService;
 
 <PageTitle>Coin Drop Gamble</PageTitle>

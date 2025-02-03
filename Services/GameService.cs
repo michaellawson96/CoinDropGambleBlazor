@@ -72,10 +72,13 @@ namespace CoinDropGamble.Services
             else if(GameState.IsPlayersTurn && !GameState.DialogList.Any())
             {
                 EnableControls();
+                NotifyStateChanged();
             }
             else if(!GameState.IsOpponentsTurn && !GameState.IsPlayersTurn && GameState.IsNewRoundStarting)
             {
                 EnableControls();
+                
+                NotifyStateChanged();
                 GameState.IsPlayersTurn = true;
             }
         }
