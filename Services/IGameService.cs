@@ -7,6 +7,7 @@ namespace CoinDropGamble.Services
     {
         // Property to expose the game state
         public GameStateDTO GameState { get; }
+        public event Action? OnChange; 
 
         // Methods for controlling the game state and flow
         public void DisableControls();

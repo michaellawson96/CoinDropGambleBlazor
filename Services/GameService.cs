@@ -6,6 +6,8 @@ namespace CoinDropGamble.Services
     internal class GameService : IGameService
     {
         public GameStateDTO GameState { get; } = new();
+        public event Action? OnChange; 
+        private void NotifyStateChanged() => OnChange?.Invoke();
         public void DisableControls() => GameState.IsPlayerControlsDisabled = true;
         public void EnableControls() => GameState.IsPlayerControlsDisabled = false;
         public void GenerateCapacityAndRange()
@@ -121,6 +123,7 @@ namespace CoinDropGamble.Services
             GameState.OpponentPlayedCoinsCount = 0;
             GameState.PiggyBankCoinCount = 0; //should happen before generating new capacity
             GenerateCapacityAndRange();
+            NotifyStateChanged();
         }
         public void NewTurn() 
         {
