@@ -1,40 +1,27 @@
 ﻿@page "/"
 @using System.ComponentModel
+@using CoinDropGamble.Models.DTOs
+@using CoinDropGamble.Services
 @using Microsoft.AspNetCore.Components;
 @using CoinDropGamble.Models.Enums
 @using CoinDropGamble.Helpers
+@using CoinDropGamble.Components.Pages.Displays;
 @rendermode InteractiveServer
+@inject IGameService GameService;
 
 <PageTitle>Coin Drop Gamble</PageTitle>
 
-@if (!_isGameStarted)
+@if (!GameService.GameState.IsGameStarted)
 {
-    <IntroCard OnStartGame="StartGameButtonPressed" />
+    <IntroDisplay OnStartGame="GameService.StartGameButtonPressed" />
 }
 else
 {
     <div class="flex flex-column justify-content-center align-items-center vh-25 py-2 background">
     <div class="row g-4">
-        <PiggyBankDisplay @ref="_piggyBankRef" GamesWon="_gamesWon" />
+        <PiggyBankDisplay />
 
-        <!-- Description Section -->
-        <div class="col-lg-8 d-flex flex-column">
-            <div class="card text-center text-white bg-dark shadow-lg section-card flex-fill">
-                <div class="card-body description-section">
-                    @if(_dialogList.Any()){
-                        <p class="card-text">@_dialogList[0].line1</p>
-                        <p class="card-text"> @_dialogList[0].line2</p>
-                        <button class="btn btn-primary flashing-button" @onclick="ProgressDialogStream">Continue</button>
-                    }
-                    else if (_dialog.line1 is not null)
-                    {
-                        <p class="card-text">@_dialog.line1</p>
-                        <p class="card-text"> @_dialog.line2</p>
-                    }
-                    
-                </div>
-            </div>
-        </div>
+        <DescriptionDisplay />
     </div>
 </div>
 
@@ -48,20 +35,20 @@ else
                         <!-- Drop Coin Action -->
                         <button 
                             class="btn btn-primary btn-lg col-12 my-1" 
-                            disabled="@(_isPlayerCoinDisabled || _isPlayerControlsDisabled || (_playerPlayedCoinsCount == MAX_COINS_PLAYABLE))" 
-                            @onclick="PlayerDropCoinAction">
+                            disabled="@(GameService.GameState.IsPlayerCoinDisabled || GameService.GameState.IsPlayerControlsDisabled || (GameService.GameState.PlayerPlayedCoinsCount == GameStateDTO.MAX_COINS_PLAYABLE))" 
+                            @onclick="GameService.PlayerDropCoinAction">
                             @* Render the coins *@
-                            @for (int i = 0; i < MAX_COINS_PLAYABLE; i++)
+                            @for (int i = 0; i < GameStateDTO.MAX_COINS_PLAYABLE; i++)
                             {
-                                <i class="bi @(i < _playerPlayedCoinsCount ? "bi-dash-circle-dotted text-secondary" : "bi-coin text-warning") me-1"></i>
+                                <i class="bi @(i < GameService.GameState.PlayerPlayedCoinsCount ? "bi-dash-circle-dotted text-secondary" : "bi-coin text-warning") me-1"></i>
                             }
                         </button>
                         <!-- Shake Action -->
-                        <button class="btn btn-success btn-lg col-12 my-1 " disabled="@(_isPlayerShakeDisabled || _hasPlayerShakenThisRound || _isPlayerControlsDisabled)" @onclick="PlayerShakeAction">Shake</button>
+                        <button class="btn btn-success btn-lg col-12 my-1 " disabled="@(GameService.GameState.IsPlayerShakeDisabled || GameService.GameState.HasPlayerShakenThisRound || GameService.GameState.IsPlayerControlsDisabled)" @onclick="GameService.PlayerShakeAction">Shake</button>
                         <!-- Special Action -->
-                        <button class="btn btn-warning btn-lg col-12  my-1 " disabled="@(_isPlayerSpecialDisabled || !_playerSpecialCoins.Any() || _isPlayerControlsDisabled)" @onclick="SpecialAction">Special</button>
+                        <button class="btn btn-warning btn-lg col-12  my-1 " disabled="@(GameService.GameState.IsPlayerSpecialDisabled || !GameService.GameState.PlayerSpecialCoins.Any() || GameService.GameState.IsPlayerControlsDisabled)" @onclick="GameService.SpecialAction">Special</button>
                         <!-- End Turn Action -->
-                        <button class="btn btn-danger btn-lg col-12  my-1 " disabled="@(_isPlayerEndTurnDisabled || !_hasPlayerActedThisTurn || _isPlayerControlsDisabled )" @onclick="EndTurnAction">End Turn</button>
+                        <button class="btn btn-danger btn-lg col-12  my-1 " disabled="@(GameService.GameState.IsPlayerEndTurnDisabled || !GameService.GameState.HasPlayerActedThisTurn || GameService.GameState.IsPlayerControlsDisabled )" @onclick="GameService.EndTurnAction">End Turn</button>
                     </div>
                 </div>
             </div>
@@ -74,15 +61,15 @@ else
                     
                     <p class="card-text">
                         PLAYER
-                        @if(_isPlayersTurn)
+                        @if(GameService.GameState.IsPlayersTurn)
                         {
                             <span class="badge rounded-pill bg-success">Your Turn</span>
                         }
                     </p>
                     <p class="card-text">
-                        @for (int i = 0; i < _currentGameMaxHealth; i++)
+                        @for (int i = 0; i < GameService.GameState.CurrentGameMaxHealth; i++)
                         {
-                            if (i < _playerHealthCount)
+                            if (i < GameService.GameState.PlayerHealthCount)
                             {
                                 <i class="bi bi-heart-fill text-danger"></i> <!-- Filled heart for health left -->
                             }
@@ -92,21 +79,21 @@ else
                             }
                         }
 
-                        &nbsp;$ @_playerPocketMoneyCount
+                        &nbsp;$ @GameService.GameState.PlayerPocketMoneyCount
                     </p>
-                    <p class="card-text">Games Won: @_gamesWon</p>
+                    <p class="card-text">Games Won: @GameService.GameState.GamesWon</p>
                     <hr>
                     <p class="card-text">
                         OPPONENT
-                        @if(_isOpponentsTurn)
+                        @if(GameService.GameState.IsOpponentsTurn)
                         {
                             <span class="badge rounded-pill bg-success">Your Turn</span>
                         }
                     </p>
                     <p class="card-text">
-                        @for (int i = 0; i < _currentGameMaxHealth; i++)
+                        @for (int i = 0; i < GameService.GameState.CurrentGameMaxHealth; i++)
                         {
-                            if (i < _opponentHealthCount)
+                            if (i < GameService.GameState.OpponentHealthCount)
                             {
                                 <i class="bi bi-heart-fill text-danger"></i> <!-- Filled heart for health left -->
                             }
@@ -116,7 +103,7 @@ else
                             }
                         }
 
-                        &nbsp;$ @_opponentPocketMoneyCount
+                        &nbsp;$ @GameService.GameState.OpponentPocketMoneyCount
                     </p>
                     
                 </div>

@@ -1,3 +1,6 @@
+@using CoinDropGamble.Services
+@inject IGameService GameService;
+
 <div class="d-flex flex-column justify-content-center align-items-center vh-100 background">
     <div class="card text-center text-white bg-dark shadow-lg">
         <div class="card-body">
@@ -5,7 +8,7 @@
             <p class="card-text">
                 Enter a high-stakes game where every coin counts. Manage your chances, outsmart your opponent, and survive the gamble.
             </p>
-            <button class="btn btn-warning btn-lg" @onclick="() => OnStartGame.InvokeAsync()">Start Game</button>
+            <button class="btn btn-warning btn-lg" @onclick="GameService.StartGameButtonPressed">Start Game</button>
         </div>
     </div>
 </div>

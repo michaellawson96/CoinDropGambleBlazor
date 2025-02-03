@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Components;
 
-namespace CoinDropGamble.Components.Pages
+namespace CoinDropGamble.Components.Pages.Displays
 {
-    public partial class IntroCard : ComponentBase
+    public partial class IntroDisplay : ComponentBase
     {
         [Parameter]
         public EventCallback OnStartGame { get; set; }

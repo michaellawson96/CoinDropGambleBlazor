@@ -2,9 +2,9 @@ using System.ComponentModel;
 
 namespace CoinDropGamble.Helpers
 {
-public static class EnumHelper
+internal static class EnumHelper
     {
-        public static string GetDescription(Enum value)
+        internal static string GetDescription(Enum value)
         {
             // Get the field information for the enum value
             var field = value.GetType().GetField(value.ToString());

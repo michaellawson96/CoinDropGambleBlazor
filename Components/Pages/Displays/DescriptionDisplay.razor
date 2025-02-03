@@ -1,0 +1,21 @@
+@using CoinDropGamble.Services
+@inject IGameService GameService;
+
+<!-- Description Section -->
+<div class="col-lg-8 d-flex flex-column">
+    <div class="card text-center text-white bg-dark shadow-lg section-card flex-fill">
+        <div class="card-body description-section">
+            @if(GameService.GameState.DialogList.Any()){
+                <p class="card-text">@GameService.GameState.DialogList[0].line1</p>
+                <p class="card-text"> @GameService.GameState.DialogList[0].line2</p>
+                <button class="btn btn-primary flashing-button" @onclick="GameService.ProgressDialogStream">Continue</button>
+            }
+            else if (GameService.GameState.Dialog.line1 is not null)
+            {
+                <p class="card-text">@GameService.GameState.Dialog.line1</p>
+                <p class="card-text"> @GameService.GameState.Dialog.line2</p>
+            }
+            
+        </div>
+    </div>
+</div>

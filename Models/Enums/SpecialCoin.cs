@@ -2,7 +2,7 @@ using System.ComponentModel;
 
 namespace CoinDropGamble.Models.Enums
 {
-    public enum SpecialCoins
+    internal enum SpecialCoins
     {
         [Description("x2 Coin - Splits into 2 coins inside the piggy bank")]
         TimesTwoCoin,
