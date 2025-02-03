@@ -5,15 +5,8 @@ namespace CoinDropGamble.Components.Pages
 {
     public partial class Gameboard : ComponentBase
     {
+    private PiggyBankDisplay? _piggyBankRef;
     private const int MAX_COINS_PLAYABLE = 3;
-    private const string COFFIN_IMAGE_PATH = "images/coffin.jpeg";
-    private const string COIN_BRIEFCASE_IMAGE_PATH = "images/coin-briefcase.jpeg";
-    private const string PIGGY_BANK_IMAGE_PATH = "images/piggy-bank-towards-viewer.jpeg";
-    private const string SPIKED_PIGGY_BANK_IMAGE_PATH = "images/spiked-piggy-bank-towards-viewer.jpeg";
-    private const string BLOODED_SPIKED_PIGGY_BANK_IMAGE_PATH = "images/smash-spiked-piggy-bank-on-head.jpeg";
-    private const string SMASHED_PIGGY_BANK_IMAGE_PATH = "images/smash-piggy-bank-on-head.jpeg";
-
-
     private bool _isGameStarted = false;
     private bool _isRegularPiggyBank = true;
     private bool _hasPlayerShakenThisRound;
@@ -32,7 +25,6 @@ namespace CoinDropGamble.Components.Pages
     private bool _isPlayerEndTurnDisabled;
     private bool _isOpponentEndTurnDisabled;
     private bool _isPlayerControlsDisabled;
-    private int _piggyBankCapacity;
     private int _piggyBankCoinCount = 0;
     private int _playerHealthCount = 3;
     private int _opponentHealthCount = 3;
@@ -46,12 +38,9 @@ namespace CoinDropGamble.Components.Pages
     private int _currentDialogIndex;
     private int _gamesWon = 0;
     private bool _isNewRoundStarting = false;
-    private int _higherDisparity;
-    private int _lowerDisparity;
     private int opponentPiggyBankCapacityGuessLow;
     private int opponentPiggyBankCapacityGuessHigh;
     private int _roundCount = 0;
-    private string _imagePath = PIGGY_BANK_IMAGE_PATH;
     private List<(string line1, string line2)> _dialogList = new();
     private (string line1, string line2) _dialog = (
         "It's your turn. Insert up to 3 coins or shake the swine", 
@@ -61,8 +50,6 @@ namespace CoinDropGamble.Components.Pages
     private List<SpecialCoins> _opponentSpecialCoins = new();
     private List<SpecialCoins> _specialCoinShopItems = new();
     private List<OpponentAction> _opponentsActionsThisTurn = new();
-    private int PiggyBankLowerLimit() => _piggyBankCapacity - _lowerDisparity;
-   private int PiggyBankHigherLimit() => _piggyBankCapacity - _higherDisparity;
     
     public void StartGameButtonPressed()
     {
@@ -75,7 +62,6 @@ namespace CoinDropGamble.Components.Pages
 
     public void PrepareNewRound()
     {
-        
         _roundCount++;
         _hasOpponentShakenThisRound = false;
         _hasPlayerShakenThisRound = false;
@@ -84,7 +70,7 @@ namespace CoinDropGamble.Components.Pages
         _playerPlayedCoinsCount = 0;
         _opponentPlayedCoinsCount = 0;
         _piggyBankCoinCount = 0; //should happen before generating new capacity
-        GenerateCapacityAndRange();
+        _piggyBankRef.GenerateCapacityAndRange();
         InvokeAsync(StateHasChanged);
     }
 
@@ -117,50 +103,7 @@ namespace CoinDropGamble.Components.Pages
 
 
 
-    private void GenerateCapacityAndRange()
-{
-    // Random number generator
-    Random random = new Random();
-
-    // Generate a random capacity between 3 and 20
-    _piggyBankCapacity = random.Next(3, 21);
-
-    // Determine the increment range based on games won
-    int incrementMax;
-    if (_gamesWon <= 10)
-        incrementMax = 1;
-    else if (_gamesWon <= 20)
-        incrementMax = random.Next(1, 3); // Random between 1 and 2
-    else if (_gamesWon <= 30)
-        incrementMax = random.Next(1, 4); // Random between 1 and 3
-    else if (_gamesWon <= 40)
-        incrementMax = random.Next(1, 5); // Random between 1 and 4
-    else
-        incrementMax = random.Next(1, 6); // Random between 1 and 5
-
-    // Reset disparities to 0
-    _higherDisparity = 0;
-    _lowerDisparity = 0;
-
-    // Apply increments to disparities
-    for (int i = 0; i < incrementMax; i++)
-    {
-        bool incrementHigherDisparity = true;
-
-        // Boundary checks
-        if (_piggyBankCapacity + _higherDisparity == 20)
-            incrementHigherDisparity = false; // Force increment to lower disparity
-        else if (_piggyBankCapacity - _lowerDisparity == 3)
-            incrementHigherDisparity = true; // Force increment to higher disparity
-        else
-            incrementHigherDisparity = random.Next(0, 2) == 0; // 50/50 chance otherwise
-
-        if (incrementHigherDisparity)
-            _higherDisparity++;
-        else
-            _lowerDisparity++;
-    }
-}
+    
 
 
     private void DisableControls() => _isPlayerControlsDisabled = true;
@@ -220,7 +163,7 @@ private int CalculateWinChance(out List<OpponentAction> offensiveActions)
     offensiveActions = new List<OpponentAction>{OpponentAction.InsertCoin,OpponentAction.InsertCoin,OpponentAction.InsertCoin,OpponentAction.EndTurn};
     int projectedCoinsInBank = _piggyBankCoinCount;
     //work out the difference in the piggy bank capacity's range
-    int capDiff = (_piggyBankCapacity+_higherDisparity)-_piggyBankCoinCount;
+    int capDiff = (_piggyBankRef.GetPiggyBankCapacity()+_piggyBankRef.GetHigherDisparity())-_piggyBankCoinCount;
     //divide 100 by the cap diff +1. this will be the amount that the chance of winning will increase by each time you put in a coin to 
     //bring the current amount of coins in the piggy bank to a value withint the range
     int chanceIncrement = 100 / Math.Max(capDiff + 1, 1);
@@ -231,7 +174,7 @@ private int CalculateWinChance(out List<OpponentAction> offensiveActions)
         //add a coin
         projectedCoinsInBank++;
         //if the current coin count is within the range, increment the coin count
-        if(projectedCoinsInBank >= (_piggyBankCapacity-_lowerDisparity) && projectedCoinsInBank <= (_piggyBankCapacity+_higherDisparity))
+        if(projectedCoinsInBank >= (_piggyBankRef.GetPiggyBankCapacity()-_piggyBankRef.GetLowerDisparity()) && projectedCoinsInBank <= (_piggyBankRef.GetPiggyBankCapacity()+_piggyBankRef.GetHigherDisparity()))
         {
             opponentWinChance += chanceIncrement;
         }
@@ -319,7 +262,7 @@ private int SimulatePlayerWinChance(int simulatedBankCount, bool playerCanShake)
     int playerWinChance = 0;
 
     // Calculate the player's chances of winning based on the simulated state
-    int capDiff = (_piggyBankCapacity + _higherDisparity) - simulatedBankCount;
+    int capDiff = (_piggyBankRef.GetPiggyBankCapacity() + _piggyBankRef.GetHigherDisparity()) - simulatedBankCount;
     int chanceIncrement = 100 / Math.Max(capDiff + 1, 1);
 
 
@@ -327,7 +270,7 @@ private int SimulatePlayerWinChance(int simulatedBankCount, bool playerCanShake)
     for (int i = 0; i < 3; i++)
     {
         simulatedBankCount++;
-        if (simulatedBankCount >= (_piggyBankCapacity - _lowerDisparity) && simulatedBankCount <= (_piggyBankCapacity + _higherDisparity))
+        if (simulatedBankCount >= (_piggyBankRef.GetPiggyBankCapacity() - _piggyBankRef.GetLowerDisparity()) && simulatedBankCount <= (_piggyBankRef.GetPiggyBankCapacity() + _piggyBankRef.GetHigherDisparity()))
         {
             playerWinChance += chanceIncrement;
         }
@@ -344,7 +287,7 @@ private int SimulatePlayerWinChance(int simulatedBankCount, bool playerCanShake)
 
 private void performNextOpponentAction()
 {
-    if(_piggyBankCoinCount == _piggyBankCapacity)
+    if(_piggyBankCoinCount == _piggyBankRef.GetPiggyBankCapacity())
         {
             CrackPiggyBank();
         }
@@ -409,7 +352,7 @@ private void performNextOpponentAction()
                 _hasPlayerActedThisTurn = true;
             }
             //if it has hit the limit. crack the piggy bank
-            if(_piggyBankCoinCount == _piggyBankCapacity)
+            if(_piggyBankCoinCount == _piggyBankRef.GetPiggyBankCapacity())
             {
                 CrackPiggyBank();
             }
